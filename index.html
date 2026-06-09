@@ -1,84 +1,86 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kinetic Mosaic & Duotone Generator</title>
+    <title>Modulator // Kinetic Mosaic Lab</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body, html { margin: 0; padding: 0; overflow: hidden; background-color: #111; font-family: monospace; }
-        canvas { display: block; }
-        /* Centrar el canvas dinámicamente según el Aspect Ratio seleccionado */
+        canvas { display: block; width: 100% !important; height: 100% !important; }
         #canvas-container {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            transition: width 0.3s ease, height 0.3s ease;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
     </style>
 </head>
-<body class="text-white selection:bg-purple-500">
+<body class="text-white select-none">
 
     <div id="canvas-container" class="w-full h-full">
         <canvas id="webgl-canvas"></canvas>
     </div>
 
-    <div class="absolute top-4 left-4 z-10 bg-black/80 backdrop-blur-md p-6 rounded-lg border border-white/10 max-w-xs flex flex-col gap-4 text-xs tracking-wider uppercase">
-        <h1 class="text-sm font-bold border-b border-white/20 pb-2 text-purple-400">Kinetic Mosaic Lab</h1>
+    <div class="absolute top-6 left-6 z-10 bg-black/85 backdrop-blur-xl p-6 rounded-xl border border-white/10 w-80 flex flex-col gap-5 text-xs tracking-widest uppercase shadow-2xl">
+        <div class="flex items-center justify-between border-b border-white/20 pb-3">
+            <h1 class="text-sm font-bold tracking-normal text-purple-400">Modulator _v1</h1>
+            <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30 animate-pulse">WebGL Active</span>
+        </div>
         
-        <div class="flex flex-col gap-1">
-            <label class="text-gray-400">1. Cargar Imagen</label>
-            <input type="file" id="image-loader" accept="image/*" class="bg-white/5 p-2 rounded cursor-pointer border border-white/10 hover:border-purple-500 transition-colors">
+        <div class="flex flex-col gap-2">
+            <label class="text-gray-400 font-bold text-[10px]">01 / Cargar Imagen</label>
+            <input type="file" id="image-loader" accept="image/*" class="bg-white/5 p-2 rounded-lg cursor-pointer border border-white/10 hover:border-purple-500 hover:bg-white/10 transition-all text-[11px]">
         </div>
 
-        <div class="flex flex-col gap-1">
-            <label class="text-gray-400">2. Formato de Salida</label>
-            <div class="grid grid-cols-3 gap-2">
-                <button id="ratio-full" class="bg-purple-600 p-2 rounded font-bold">Full</button>
-                <button id="ratio-169" class="bg-white/10 p-2 rounded hover:bg-white/20">16:9</button>
-                <button id="ratio-45" class="bg-white/10 p-2 rounded hover:bg-white/20">4:5</button>
+        <div class="flex flex-col gap-2">
+            <label class="text-gray-400 font-bold text-[10px]">02 / Formato de Salida</label>
+            <div class="grid grid-cols-3 gap-2 text-center font-bold">
+                <button id="ratio-full" class="bg-purple-600 p-2.5 rounded-lg border border-purple-400/30 cursor-pointer transition-all">Full</button>
+                <button id="ratio-169" class="bg-white/5 p-2.5 rounded-lg border border-white/5 hover:bg-white/10 cursor-pointer transition-all">16:9</button>
+                <button id="ratio-45" class="bg-white/5 p-2.5 rounded-lg border border-white/5 hover:bg-white/10 cursor-pointer transition-all">4:5</button>
             </div>
         </div>
 
-        <div class="flex flex-col gap-2 border-t border-white/10 pt-2">
-            <label class="text-gray-400">3. Configuración del Bloque</label>
-            <div class="flex justify-between">
-                <span>Columnas: <span id="cols-val">8</span></span>
-                <input type="range" id="param-cols" min="2" max="30" value="8" class="w-24">
+        <div class="flex flex-col gap-3 border-t border-white/10 pt-3">
+            <label class="text-gray-400 font-bold text-[10px]">03 / Modulación Cinética</label>
+            <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg border border-white/5">
+                <span class="text-gray-300 text-[11px]">Columnas: <span id="cols-val" class="font-bold text-purple-400">10</span></span>
+                <input type="range" id="param-cols" min="2" max="40" value="10" class="w-28 accent-purple-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer">
             </div>
-            <div class="flex justify-between">
-                <span>Velocidad: <span id="speed-val">1.0</span></span>
-                <input type="range" id="param-speed" min="0" max="4" step="0.1" value="1.0" class="w-24">
+            <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg border border-white/5">
+                <span class="text-gray-300 text-[11px]">Velocidad: <span id="speed-val" class="font-bold text-purple-400">1.0</span></span>
+                <input type="range" id="param-speed" min="0" max="4" step="0.1" value="1.0" class="w-28 accent-purple-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer">
             </div>
         </div>
 
-        <div class="flex flex-col gap-2 border-t border-white/10 pt-2">
-            <label class="text-gray-400">4. Mapeo de Color</label>
-            <div class="grid grid-cols-3 gap-2 items-center">
-                <div class="flex flex-col items-center">
-                    <span class="text-[10px] text-gray-500">Sombra</span>
-                    <input type="color" id="color-shadow" value="#221e2b" class="w-full h-8 rounded cursor-pointer bg-transparent">
+        <div class="flex flex-col gap-3 border-t border-white/10 pt-3">
+            <label class="text-gray-400 font-bold text-[10px]">04 / Cromatismo (Hex)</label>
+            <div class="grid grid-cols-3 gap-2 bg-white/5 p-2 rounded-lg border border-white/5">
+                <div class="flex flex-col items-center gap-1">
+                    <span class="text-[9px] text-gray-400">Sombra</span>
+                    <input type="color" id="color-shadow" value="#1c1626" class="w-full h-8 rounded cursor-pointer bg-transparent border-0 outline-none">
                 </div>
-                <div class="flex flex-col items-center">
-                    <span class="text-[10px] text-gray-500">Medio</span>
-                    <input type="color" id="color-mid" value="#c3beeb" class="w-full h-8 rounded cursor-pointer bg-transparent">
+                <div class="flex flex-col items-center gap-1">
+                    <span class="text-[9px] text-gray-400">Medio</span>
+                    <input type="color" id="color-mid" value="#bebeeb" class="w-full h-8 rounded cursor-pointer bg-transparent border-0 outline-none">
                 </div>
-                <div class="flex flex-col items-center">
-                    <span class="text-[10px] text-gray-500">Luz</span>
-                    <input type="color" id="color-light" value="#ffffff" class="w-full h-8 rounded cursor-pointer bg-transparent">
+                <div class="flex flex-col items-center gap-1">
+                    <span class="text-[9px] text-gray-400">Luz</span>
+                    <input type="color" id="color-light" value="#ffffff" class="w-full h-8 rounded cursor-pointer bg-transparent border-0 outline-none">
                 </div>
             </div>
-            <div class="flex items-center gap-2 mt-1">
-                <input type="checkbox" id="use-tritone" checked class="accent-purple-500">
-                <label for="use-tritone" class="text-[10px] cursor-pointer">Habilitar Tritono</label>
+            <div class="flex items-center gap-2 px-1">
+                <input type="checkbox" id="use-tritone" checked class="w-4 h-4 rounded text-purple-600 bg-white/10 border-white/20 focus:ring-0 accent-purple-500 cursor-pointer">
+                <label for="use-tritone" class="text-[10px] text-gray-300 cursor-pointer select-none">Habilitar Tritono</label>
             </div>
         </div>
 
-        <div class="flex flex-col gap-2 border-t border-white/10 pt-4">
-            <button id="btn-snap" class="bg-emerald-600 hover:bg-emerald-500 p-2 rounded font-bold transition-colors">Capturar PNG</button>
-            <button id="btn-record" class="bg-red-600 hover:bg-red-500 p-2 rounded font-bold transition-colors flex items-center justify-center gap-2">
+        <div class="flex flex-col gap-2 border-t border-white/10 pt-3 mt-1">
+            <button id="btn-snap" class="bg-emerald-600 hover:bg-emerald-500 p-3 rounded-lg font-bold transition-colors cursor-pointer text-center tracking-widest shadow-lg shadow-emerald-900/20">Capturar PNG</button>
+            <button id="btn-record" class="bg-red-600 hover:bg-red-500 p-3 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer tracking-widest shadow-lg shadow-red-900/20">
                 <span id="record-dot" class="w-2 h-2 bg-white rounded-full hidden animate-pulse"></span>
                 <span id="record-text">Grabar WebM (5s)</span>
             </button>
@@ -86,5 +88,282 @@
     </div>
 
     <script>
-        // --- 1. SHADERS EN GLSL ---
-        // El Vertex Shader calcula
+        // Fragment shader refinado con estética glitch analógica basada en tu imagen
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            uniform sampler2D uTexture;
+            uniform vec2 uResolution;
+            uniform vec2 uImageResolution;
+            uniform float uTime;
+            uniform float uCols;
+            uniform float uSpeed;
+            
+            uniform vec3 uColorShadow;
+            uniform vec3 uColorMid;
+            uniform vec3 uColorLight;
+            uniform bool uUseTritone;
+
+            varying vec2 vUv;
+
+            float hash(float n) { return fract(sin(n) * 43758.5453123); }
+
+            void main() {
+                // Cálculo Cover de Aspect Ratio
+                vec2 ratio = vec2(
+                    min((uResolution.x / uResolution.y) / (uImageResolution.x / uImageResolution.y), 1.0),
+                    min((uResolution.y / uResolution.x) / (uImageResolution.y / uImageResolution.x), 1.0)
+                );
+                vec2 uv = vec2(
+                    vUv.x * ratio.x + (1.0 - ratio.x) * 0.5,
+                    vUv.y * ratio.y + (1.0 - ratio.y) * 0.5
+                );
+
+                // Modular columnas discretas
+                float colIndex = floor(uv.x * uCols);
+                
+                // Variación cinética por bloque analógico
+                float speedOffset = hash(colIndex * 314.15) * 2.0 - 1.0;
+                float shift = uTime * uSpeed * 0.15 * (0.5 + abs(speedOffset));
+                
+                vec2 distortedUv = uv;
+                
+                // Generar los cortes planos y saltos cinéticos
+                if(hash(colIndex * 84.71) > 0.35) {
+                    distortedUv.y = fract(uv.y + shift * sign(speedOffset));
+                }
+
+                // Extraer textura
+                vec4 texColor = texture2D(uTexture, distortedUv);
+                
+                // Conversión de luminancia B&W de alta fidelidad
+                float grayscale = dot(texColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+
+                // Mapeo cromático Duotono / Tritono progresivo
+                vec3 finalColor;
+                if(uUseTritone) {
+                    if(grayscale < 0.5) {
+                        finalColor = mix(uColorShadow, uColorMid, grayscale * 2.0);
+                    } else {
+                        finalColor = mix(uColorMid, uColorLight, (grayscale - 0.5) * 2.0);
+                    }
+                } else {
+                    finalColor = mix(uColorShadow, uColorLight, grayscale);
+                }
+
+                // Generar siluetas/bloques planos ciegos (como los rectángulos lavanda mate de la referencia)
+                float blockBlank = hash(colIndex * 19.43 + floor(distortedUv.y * uCols * 0.5));
+                if(blockBlank > 0.82) {
+                    finalColor = uColorMid;
+                }
+
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+
+        let scene, camera, renderer, material, mesh, currentTexture;
+        const canvas = document.getElementById('webgl-canvas');
+        const container = document.getElementById('canvas-container');
+        
+        const uniforms = {
+            uTexture: { value: null },
+            uResolution: { value: new THREE.Vector2(1, 1) },
+            uImageResolution: { value: new THREE.Vector2(1, 1) },
+            uTime: { value: 0 },
+            uCols: { value: 10.0 },
+            uSpeed: { value: 1.0 },
+            uColorShadow: { value: new THREE.Color('#1c1626') },
+            uColorMid: { value: new THREE.Color('#bebeeb') },
+            uColorLight: { value: new THREE.Color('#ffffff') },
+            uUseTritone: { value: true }
+        };
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, preserveDrawingBuffer: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            const w = container.clientWidth || window.innerWidth;
+            const h = container.clientHeight || window.innerHeight;
+            renderer.setSize(w, h);
+            uniforms.uResolution.value.set(w, h);
+
+            material = new THREE.ShaderMaterial({
+                vertexShader,
+                fragmentShader,
+                uniforms,
+                depthWrite: false,
+                depthTest: false
+            });
+
+            const geometry = new THREE.PlaneGeometry(2, 2);
+            mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+
+            // Crear textura por defecto segura e inmediata
+            createPlaceholder();
+
+            window.addEventListener('resize', onWindowResize);
+            animate(0);
+        }
+
+        function animate(timestamp) {
+            requestAnimationFrame(animate);
+            uniforms.uTime.value = timestamp * 0.001;
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            renderer.setSize(w, h);
+            uniforms.uResolution.value.set(w, h);
+        }
+
+        // Carga Segura con FileReader (Manejo local y producción sin CORS)
+        document.getElementById('image-loader').addEventListener('change', function(e) {
+            if(!e.target.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    if (currentTexture) currentTexture.dispose();
+                    
+                    currentTexture = new THREE.Texture(img);
+                    currentTexture.minFilter = THREE.LinearFilter;
+                    currentTexture.magFilter = THREE.LinearFilter;
+                    currentTexture.needsUpdate = true;
+                    
+                    uniforms.uTexture.value = currentTexture;
+                    uniforms.uImageResolution.value.set(img.width, img.height);
+                    onWindowResize();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        // Eventos de Parámetros Dinámicos
+        document.getElementById('param-cols').addEventListener('input', (e) => {
+            uniforms.uCols.value = parseFloat(e.target.value);
+            document.getElementById('cols-val').innerText = e.target.value;
+        });
+        document.getElementById('param-speed').addEventListener('input', (e) => {
+            uniforms.uSpeed.value = parseFloat(e.target.value);
+            document.getElementById('speed-val').innerText = e.target.value;
+        });
+
+        // Controles de Color Interactivos
+        document.getElementById('color-shadow').addEventListener('input', (e) => uniforms.uColorShadow.value.set(e.target.value));
+        document.getElementById('color-mid').addEventListener('input', (e) => uniforms.uColorMid.value.set(e.target.value));
+        document.getElementById('color-light').addEventListener('input', (e) => uniforms.uColorLight.value.set(e.target.value));
+        document.getElementById('use-tritone').addEventListener('change', (e) => uniforms.uUseTritone.value = e.target.checked);
+
+        // Ajustes de Aspect Ratio para Exportar Diseños Precisos
+        function setRatioLayout(wFactor, hFactor, activeId) {
+            // Estilizar botones activos
+            ['ratio-full', 'ratio-169', 'ratio-45'].forEach(id => {
+                document.getElementById(id).className = id === activeId 
+                    ? "bg-purple-600 p-2.5 rounded-lg border border-purple-400/30 cursor-pointer transition-all"
+                    : "bg-white/5 p-2.5 rounded-lg border border-white/5 hover:bg-white/10 cursor-pointer transition-all";
+            });
+
+            if(wFactor === 0) {
+                container.style.width = "100%";
+                container.style.height = "100%";
+            } else {
+                const maxH = window.innerHeight * 0.82;
+                const computedW = maxH * (wFactor / hFactor);
+                if(computedW > window.innerWidth * 0.82) {
+                    container.style.width = '82vw';
+                    container.style.height = (window.innerWidth * 0.82) * (hFactor / wFactor) + 'px';
+                } else {
+                    container.style.width = computedW + 'px';
+                    container.style.height = maxH + 'px';
+                }
+            }
+            setTimeout(onWindowResize, 40);
+        }
+
+        document.getElementById('ratio-full').addEventListener('click', () => setRatioLayout(0, 0, 'ratio-full'));
+        document.getElementById('ratio-169').addEventListener('click', () => setRatioLayout(16, 9, 'ratio-169'));
+        document.getElementById('ratio-45').addEventListener('click', () => setRatioLayout(4, 5, 'ratio-45'));
+
+        // Captura PNG Limpia
+        document.getElementById('btn-snap').addEventListener('click', () => {
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `kinetic-modulator-${Date.now()}.png`;
+            link.href = dataURL;
+            link.click();
+        });
+
+        // Renderizado y exportación cinética en WebM Nativa (Duración de 5 segundos)
+        let isRecording = false;
+        document.getElementById('btn-record').addEventListener('click', async () => {
+            if (isRecording) return;
+            isRecording = true;
+            
+            const textEl = document.getElementById('record-text');
+            const dotEl = document.getElementById('record-dot');
+            textEl.innerText = "GRAVANDO VIDEO...";
+            dotEl.classList.remove('hidden');
+
+            const stream = canvas.captureStream(30);
+            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+            const chunks = [];
+
+            recorder.ondataavailable = e => chunks.push(e.data);
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `kinetic-modulation-${Date.now()}.webm`;
+                a.click();
+                
+                textEl.innerText = "Grabar WebM (5s)";
+                dotEl.classList.add('hidden');
+                isRecording = false;
+            };
+
+            recorder.start();
+            setTimeout(() => { recorder.stop(); }, 5000);
+        });
+
+        // Crear placeholder inicial con tipografía de diseño para guiar al usuario
+        function createPlaceholder() {
+            const size = 1024;
+            const canvasP = document.createElement('canvas');
+            canvasP.width = size; canvasP.height = size;
+            const ctx = canvasP.getContext('2d');
+            
+            let grad = ctx.createLinearGradient(0, 0, size, size);
+            grad.addColorStop(0, '#15111e'); grad.addColorStop(0.5, '#443b5c'); grad.addColorStop(1, '#ffffff');
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, size, size);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 54px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText("[ POR FAVOR, CARGA UNA IMAGEN ]", size/2, size/2);
+            ctx.font = '32px monospace';
+            ctx.fillStyle = '#bebeeb';
+            ctx.fillText("PARA ACTIVAR EL MOSAICO CINÉTICO", size/2, size/2 + 70);
+            
+            currentTexture = new THREE.CanvasTexture(canvasP);
+            uniforms.uTexture.value = currentTexture;
+            uniforms.uImageResolution.value.set(size, size);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
