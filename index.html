@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinetic Mosaic & Duotone Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; background-color: #111; font-family: monospace; }
+        canvas { display: block; }
+        /* Centrar el canvas dinámicamente según el Aspect Ratio seleccionado */
+        #canvas-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease;
+        }
+    </style>
+</head>
+<body class="text-white selection:bg-purple-500">
+
+    <div id="canvas-container" class="w-full h-full">
+        <canvas id="webgl-canvas"></canvas>
+    </div>
+
+    <div class="absolute top-4 left-4 z-10 bg-black/80 backdrop-blur-md p-6 rounded-lg border border-white/10 max-w-xs flex flex-col gap-4 text-xs tracking-wider uppercase">
+        <h1 class="text-sm font-bold border-b border-white/20 pb-2 text-purple-400">Kinetic Mosaic Lab</h1>
+        
+        <div class="flex flex-col gap-1">
+            <label class="text-gray-400">1. Cargar Imagen</label>
+            <input type="file" id="image-loader" accept="image/*" class="bg-white/5 p-2 rounded cursor-pointer border border-white/10 hover:border-purple-500 transition-colors">
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label class="text-gray-400">2. Formato de Salida</label>
+            <div class="grid grid-cols-3 gap-2">
+                <button id="ratio-full" class="bg-purple-600 p-2 rounded font-bold">Full</button>
+                <button id="ratio-169" class="bg-white/10 p-2 rounded hover:bg-white/20">16:9</button>
+                <button id="ratio-45" class="bg-white/10 p-2 rounded hover:bg-white/20">4:5</button>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2 border-t border-white/10 pt-2">
+            <label class="text-gray-400">3. Configuración del Bloque</label>
+            <div class="flex justify-between">
+                <span>Columnas: <span id="cols-val">8</span></span>
+                <input type="range" id="param-cols" min="2" max="30" value="8" class="w-24">
+            </div>
+            <div class="flex justify-between">
+                <span>Velocidad: <span id="speed-val">1.0</span></span>
+                <input type="range" id="param-speed" min="0" max="4" step="0.1" value="1.0" class="w-24">
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2 border-t border-white/10 pt-2">
+            <label class="text-gray-400">4. Mapeo de Color</label>
+            <div class="grid grid-cols-3 gap-2 items-center">
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] text-gray-500">Sombra</span>
+                    <input type="color" id="color-shadow" value="#221e2b" class="w-full h-8 rounded cursor-pointer bg-transparent">
+                </div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] text-gray-500">Medio</span>
+                    <input type="color" id="color-mid" value="#c3beeb" class="w-full h-8 rounded cursor-pointer bg-transparent">
+                </div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] text-gray-500">Luz</span>
+                    <input type="color" id="color-light" value="#ffffff" class="w-full h-8 rounded cursor-pointer bg-transparent">
+                </div>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+                <input type="checkbox" id="use-tritone" checked class="accent-purple-500">
+                <label for="use-tritone" class="text-[10px] cursor-pointer">Habilitar Tritono</label>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2 border-t border-white/10 pt-4">
+            <button id="btn-snap" class="bg-emerald-600 hover:bg-emerald-500 p-2 rounded font-bold transition-colors">Capturar PNG</button>
+            <button id="btn-record" class="bg-red-600 hover:bg-red-500 p-2 rounded font-bold transition-colors flex items-center justify-center gap-2">
+                <span id="record-dot" class="w-2 h-2 bg-white rounded-full hidden animate-pulse"></span>
+                <span id="record-text">Grabar WebM (5s)</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. SHADERS EN GLSL ---
+        // El Vertex Shader calcula
